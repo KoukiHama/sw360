@@ -201,6 +201,7 @@ struct UsedReleaseRelations {
     3: optional string type = "usedReleaseRelation",
     4: required string projectId,
     5: optional set<ReleaseRelationship> usedReleaseRelations = [],
+    6: optional set<ProjectRelationship> usedProjectRelations,
 }
 
 struct ClearingRequest {
@@ -441,4 +442,9 @@ service ProjectService {
      * create clearing request for project
      */
     AddDocumentRequestSummary createClearingRequest(1: ClearingRequest clearingRequest, 2: User user, 3: string projectUrl);
+
+    /**
+     * get clearing state information for list view
+     */
+    list<map<string,string>> getClearingStateInformationForListView(1:string projectId, 2: User user) throws (1: SW360Exception exp);
 }

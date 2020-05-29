@@ -37,6 +37,7 @@
              scope="request"/>
 <jsp:useBean id="closedClearingRequests" type="java.util.List<org.eclipse.sw360.datahandler.thrift.projects.ClearingRequest>"
              scope="request"/>
+<jsp:useBean id="isClearingExpert" type="java.lang.Boolean" scope="request"/>
 <core_rt:set var="user" value="<%=themeDisplay.getUser()%>"/>
 
 <div class="container" style="display: none;">
@@ -87,12 +88,12 @@
                             <colgroup>
                                 <col style="width: 2%;" />
                                 <col style="width: 10%;" /> <!-- Project BU -->
-                                <col style="width: 18%;" /> <!-- Clearing Request ID -->
-                                <col style="width: 10%;" /> <!-- Requested Date -->
-                                <col style="width: 15%;" /> <!-- Requesting User -->
-                                <col style="width: 20%;" /> <!-- Clearing Team -->
-                                <col style="width: 10%;" /> <!-- Agreed Date -->
+                                <col style="width: 10%" /> <!-- Clearing Request ID -->
                                 <col style="width: 10%;" /> <!-- Status -->
+                                <col style="width: 12%;" /> <!-- Requested Date -->
+                                <col style="width: 19%;" /> <!-- Requesting User -->
+                                <col style="width: 20%;" /> <!-- Clearing Team -->
+                                <col style="width: 12%;" /> <!-- Agreed Date -->
                                 <col style="width: 5%;" /> <!-- Action -->
                             </colgroup>
                             </table>
@@ -102,12 +103,12 @@
                             <colgroup>
                                 <col style="width: 2%;" />
                                 <col style="width: 10%;" /> <!-- Project BU -->
-                                <col style="width: 18%;" /> <!-- Clearing Request ID -->
-                                <col style="width: 10%;" /> <!-- Requested Date -->
-                                <col style="width: 15%;" /> <!-- Requesting User -->
-                                <col style="width: 20%;" /> <!-- Clearing Team -->
-                                <col style="width: 10%;" /> <!-- Agreed Date -->
+                                <col style="width: 10%;" /> <!-- Clearing Request ID -->
                                 <col style="width: 10%;" /> <!-- Status -->
+                                <col style="width: 12%;" /> <!-- Requested Date -->
+                                <col style="width: 19%;" /> <!-- Requesting User -->
+                                <col style="width: 20%;" /> <!-- Clearing Team -->
+                                <col style="width: 12%;" /> <!-- Agreed Date -->
                                 <col style="width: 5%;" /> <!-- Action -->
                             </colgroup>
                             </table>
@@ -156,6 +157,18 @@ AUI().use('liferay-portlet-url', function () {
                 e.preventDefault();
                 moderationsDataTable.buttons('.custom-print-button').trigger();
             }
+        });
+
+        $('.list-group-item').on('click', function(e) {
+                let ref = $(this).attr('href');
+                if (ref === '#tab-OpenCR' || ref === '#tab-ClosedCR') {
+                    let msg = '<liferay-ui:message key="clearing" /> (${clearingRequests.size()}/${closedClearingRequests.size()})';
+                    $('.portlet-title').attr('title', msg);
+                    $('.portlet-title').html(msg);
+                } else {
+                    $('.portlet-title').attr('title', '<liferay-ui:message key="moderations" /> (${moderationRequests.size()}/${closedModerationRequests.size()})');
+                    $('.portlet-title').html('<liferay-ui:message key="moderations" /> (${moderationRequests.size()}/<span id="requestCounter">${closedModerationRequests.size()}</span>)');
+                }
         });
 
         function prepareModerationsData() {
@@ -232,11 +245,11 @@ AUI().use('liferay-portlet-url', function () {
                     "0": '',
                     "1": '<sw360:out value="${request.projectBU}"/>',
                     "2": "<sw360:DisplayClearingRequestLink clearingRequestId="${request.id}"/>",
-                    "3": '<sw360:out value="${request.requestedClearingDate}"/>',
-                    "4": '<sw360:DisplayUserEmail email="${request.requestingUser}" />',
-                    "5": '<sw360:DisplayUserEmail email="${request.clearingTeam}" />',
-                    "6": '<sw360:out value="${request.agreedClearingDate}"/>',
-                    "7": "<sw360:DisplayEnum value="${request.clearingState}"/>",
+                    "3": "<sw360:DisplayEnum value="${request.clearingState}"/>",
+                    "4": '<sw360:out value="${request.requestedClearingDate}"/>',
+                    "5": '<sw360:DisplayUserEmail email="${request.requestingUser}" />',
+                    "6": '<sw360:DisplayUserEmail email="${request.clearingTeam}" />',
+                    "7": '<sw360:out value="${request.agreedClearingDate}"/>',
                     "8": '<sw360:out value="${request.requestingUserComment}" maxChar="150" jsQuoting="true" />',
                     "9": '<sw360:out value="${request.clearingTeamComment}" maxChar="150" jsQuoting="true" />',
                     "10": '${request.projectId}'
@@ -253,11 +266,11 @@ AUI().use('liferay-portlet-url', function () {
                     "0": '',
                     "1": '<sw360:out value="${request.projectBU}"/>',
                     "2": "<sw360:DisplayClearingRequestLink clearingRequestId="${request.id}"/>",
-                    "3": '<sw360:out value="${request.requestedClearingDate}"/>',
-                    "4": '<sw360:DisplayUserEmail email="${request.requestingUser}" />',
-                    "5": '<sw360:DisplayUserEmail email="${request.clearingTeam}" />',
-                    "6": '<sw360:out value="${request.agreedClearingDate}"/>',
-                    "7": "<sw360:DisplayEnum value="${request.clearingState}"/>",
+                    "3": "<sw360:DisplayEnum value="${request.clearingState}"/>",
+                    "4": '<sw360:out value="${request.requestedClearingDate}"/>',
+                    "5": '<sw360:DisplayUserEmail email="${request.requestingUser}" />',
+                    "6": '<sw360:DisplayUserEmail email="${request.clearingTeam}" />',
+                    "7": '<sw360:out value="${request.agreedClearingDate}"/>',
                     "8": '<sw360:out value="${request.requestingUserComment}" maxChar="150" jsQuoting="true" />',
                     "9": '<sw360:out value="${request.clearingTeamComment}" maxChar="150" jsQuoting="true" />',
                     "10": '${request.projectId}'
@@ -274,30 +287,31 @@ AUI().use('liferay-portlet-url', function () {
                     {title: '<svg class="lexicon-icon"><title>Expand to see comments</title><use href="/o/org.eclipse.sw360.liferay-theme/images/clay/icons.svg#info-circle-open"/></svg>', className: 'details-control', /* 'orderable': false, */ data: null, defaultContent: '&#x25BA'},
                     {title: "Project BU", className: 'text-nowrap'},
                     {title: "Request ID", className: 'text-nowrap' },
+                    {title: "Status", className: 'text-nowrap'},
                     {title: "Requested Date", className: 'text-nowrap'},
                     {title: "Requesting User"},
                     {title: "Clearing Team"},
                     {title: "Agreed Date"},
-                    {title: "Status", className: 'text-nowrap'},
                     {title: "Actions", render: {display: renderClearingRequestAction}, className: 'one action'}
                 ],
                 language: {
-                    emptyTable: "No clearing requests are found."
+                    emptyTable: "<liferay-ui:message key='no.clearing.request.found'/>"
                 },
                 "order": [[2, 'asc']],
                 initComplete: datatables.showPageContainer
-            }, [1,2,3,4,5,6,7], [0]);
+            }, [1,2,3,4,5,6,7], [0,8]);
         }
 
         function renderClearingRequestAction(tableData, type, row) {
-            if ($(row[7]).text() === 'Closed' || !row[10] || $(row[5]).attr('href').replace('mailto:', '') !== '${user.emailAddress}') {
+            if (row[10] && ($(row[6]).attr('href').replace('mailto:', '') === '${user.emailAddress}' || ${isClearingExpert})) {
+                return render.linkTo(
+                        makeClearingRequestUrl(row.DT_RowId, '<%=PortalConstants.PAGENAME_EDIT_CLEARING_REQUEST%>'),
+                        "",
+                        '<div class="actions"><svg class="edit lexicon-icon"><title>Edit</title><use href="/o/org.eclipse.sw360.liferay-theme/images/clay/icons.svg#pencil"/></svg></div>'
+                        );
+            } else {
                 return '';
             }
-            return render.linkTo(
-                    makeClearingRequestUrl(row.DT_RowId, '<%=PortalConstants.PAGENAME_EDIT_CLEARING_REQUEST%>'),
-                    "",
-                    '<div class="actions"><svg class="edit lexicon-icon"><title>Edit</title><use href="/o/org.eclipse.sw360.liferay-theme/images/clay/icons.svg#pencil"/></svg></div>'
-                    );
         }
 
         // helper functions

@@ -215,8 +215,17 @@ public class ProjectPortlet extends FossologyAwarePortlet {
             createClearingRequest(request, response);
         } else if (PortalConstants.VIEW_CLEARING_REQUEST.equals(action)) {
             showClearingRequest(request, response);
+        } else if (PortalConstants.LIST_CLEARING_STATUS.equals(action)) {
+            serveClearingStatusList(request, response);
+        }  else if (PortalConstants.CLEARING_STATUS_ON_LOAD.equals(action)) {
+            serveClearingStatusonLoad(request, response);
         } else if (isGenericAction(action)) {
             dealWithGenericAction(request, response, action);
+        } else if (PortalConstants.LOAD_CHANGE_LOGS.equals(action) || PortalConstants.VIEW_CHANGE_LOGS.equals(action)) {
+            ChangeLogsPortletUtils changeLogsPortletUtilsPortletUtils = PortletUtils.getChangeLogsPortletUtils(thriftClients);
+            JSONObject dataForChangeLogs = changeLogsPortletUtilsPortletUtils.serveResourceForChangeLogs(request,
+                    response, action);
+            writeJSON(request, response, dataForChangeLogs);
         }
     }
 
@@ -295,7 +304,8 @@ public class ProjectPortlet extends FossologyAwarePortlet {
             jsonGenerator.writeStartObject();
             jsonGenerator.writeStringField(RESULT, requestSummary.getRequestStatus().toString());
             if (AddDocumentRequestStatus.FAILURE.equals(requestSummary.getRequestStatus())) {
-                jsonGenerator.writeStringField("message", requestSummary.getMessage());
+                ResourceBundle resourceBundle = ResourceBundleUtil.getBundle("content.Language", request.getLocale(), getClass());
+                jsonGenerator.writeStringField("message", LanguageUtil.get(resourceBundle, requestSummary.getMessage().replace(' ','.').toLowerCase()));
             } else {
                 jsonGenerator.writeStringField(CLEARING_REQUEST_ID, requestSummary.getId());
             }
@@ -421,6 +431,7 @@ public class ProjectPortlet extends FossologyAwarePortlet {
         final String projectId = request.getParameter(PROJECT_ID);
         String outputGenerator = request.getParameter(PortalConstants.LICENSE_INFO_SELECTED_OUTPUT_FORMAT);
         String extIdsFromRequest = request.getParameter(PortalConstants.EXTERNAL_ID_SELECTED_KEYS);
+        boolean isLinkedProjectPresent = Boolean.parseBoolean(request.getParameter(PortalConstants.IS_LINKED_PROJECT_PRESENT));
         List<String> selectedReleaseRelationships =  getSelectedReleaseRationships(request);
         String[] selectedAttachmentIdsWithPathArray = request.getParameterValues(PortalConstants.LICENSE_INFO_RELEASE_TO_ATTACHMENT);
         final Set<ReleaseRelationship> listOfSelectedRelationships = selectedReleaseRelationships.stream()
@@ -430,12 +441,46 @@ public class ProjectPortlet extends FossologyAwarePortlet {
         final Set<String> listOfSelectedRelationshipsInString = listOfSelectedRelationships.stream().map(ReleaseRelationship::name)
                 .collect(Collectors.toSet());
 
+        String selectedProjectRelation = request.getParameter(PortalConstants.SELECTED_PROJECT_RELATIONS);
+        List<String> selectedProjectRelationStrAsList = selectedProjectRelation == null ? Lists.newArrayList()
+                : Arrays.asList(selectedProjectRelation.split(","));
+
+        Set<ProjectRelationship> listOfSelectedProjectRelationships = selectedProjectRelationStrAsList.stream()
+                .map(rel -> ThriftEnumUtils.stringToEnum(rel, ProjectRelationship.class)).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        User user = UserCacheHolder.getUserFromRequest(request);
+        ProjectService.Iface projClient = thriftClients.makeProjectClient();
+        Project project = null;
+        try {
+            project = projClient.getProjectById(projectId, user);
+        } catch (TException e) {
+            log.error("Error getting project with id " + projectId + " and generator ", e);
+            response.setProperty(ResourceResponse.HTTP_STATUS_CODE,
+                    Integer.toString(HttpServletResponse.SC_INTERNAL_SERVER_ERROR));
+            return;
+        }
+
+        List<ProjectLink> filteredMappedProjectLinks = createLinkedProjects(project,
+                filterAndSortAttachments(SW360Constants.LICENSE_INFO_ATTACHMENT_TYPES), true, user,
+                listOfSelectedProjectRelationships);
+        Set<String> filteredProjectIds = filteredProjectIds(filteredMappedProjectLinks);
         String externalIds = Optional.ofNullable(extIdsFromRequest).orElse(StringUtils.EMPTY);
 
         Set<String> selectedAttachmentIdsWithPath = Sets.newHashSet();
         if (null != selectedAttachmentIdsWithPathArray) {
             selectedAttachmentIdsWithPath = Sets.newHashSet(selectedAttachmentIdsWithPathArray);
         }
+
+        selectedAttachmentIdsWithPath=selectedAttachmentIdsWithPath.stream().filter(fullPath -> {
+            String[] pathParts = fullPath.split(":");
+            int length = pathParts.length;
+            if (length >= 4) {
+                String projectIdOpted = pathParts[pathParts.length - 4];
+                return filteredProjectIds.contains(projectIdOpted);
+            }
+            return true;
+        }).collect(Collectors.toSet());
 
         Set<String> filteredSelectedAttachmentIdsWithPath = filterSelectedAttachmentIdsWithPath(selectedAttachmentIdsWithPath, listOfSelectedRelationshipsInString);
         final Map<String, Set<LicenseNameWithText>> excludedLicensesPerAttachmentIdWithPath = ProjectPortletUtils
@@ -471,13 +516,11 @@ public class ProjectPortlet extends FossologyAwarePortlet {
 
         try {
             final LicenseInfoService.Iface licenseInfoClient = thriftClients.makeLicenseInfoClient();
-            final User user = UserCacheHolder.getUserFromRequest(request);
-            Project project = thriftClients.makeProjectClient().getProjectById(projectId, user);
             LicenseInfoFile licenseInfoFile = licenseInfoClient.getLicenseInfoFile(project, user, outputGenerator,
                     releaseIdsToSelectedAttachmentIds, excludedLicensesPerAttachmentId, externalIds);
             saveLicenseInfoAttachmentUsages(project, user, filteredSelectedAttachmentIdsWithPath,
                     excludedLicensesPerAttachmentIdWithPath);
-            saveSelectedReleaseRelations(projectId, listOfSelectedRelationships);
+            saveSelectedReleaseAndProjectRelations(projectId, listOfSelectedRelationships, listOfSelectedProjectRelationships, isLinkedProjectPresent);
             sendLicenseInfoResponse(request, response, project, licenseInfoFile);
         } catch (TException e) {
             log.error("Error getting LicenseInfo file for project with id " + projectId + " and generator " + outputGenerator, e);
@@ -485,18 +528,26 @@ public class ProjectPortlet extends FossologyAwarePortlet {
         }
     }
 
-    private void saveSelectedReleaseRelations(String projectId, Set<ReleaseRelationship> listOfSelectedRelationships) {
+    private void saveSelectedReleaseAndProjectRelations(String projectId,
+            Set<ReleaseRelationship> listOfSelectedRelationships,
+            Set<ProjectRelationship> listOfSelectedProjectRelationships, boolean isLinkedProjectPresent) {
         UsedReleaseRelations usedReleaseRelation = new UsedReleaseRelations();
         try {
             ProjectService.Iface client = thriftClients.makeProjectClient();
             List<UsedReleaseRelations> usedReleaseRelations = nullToEmptyList(
                     client.getUsedReleaseRelationsByProjectId(projectId));
             if (CommonUtils.isNotEmpty(usedReleaseRelations)) {
-                usedReleaseRelation = usedReleaseRelations.get(0)
-                        .setUsedReleaseRelations(listOfSelectedRelationships);
+                usedReleaseRelation = usedReleaseRelations.get(0);
+                if (isLinkedProjectPresent) {
+                    usedReleaseRelation.setUsedProjectRelations(listOfSelectedProjectRelationships);
+                }
+                usedReleaseRelation.setUsedReleaseRelations(listOfSelectedRelationships);
                 client.updateReleaseRelationsUsage(usedReleaseRelation);
             } else {
                 usedReleaseRelation.setProjectId(projectId);
+                if (isLinkedProjectPresent) {
+                    usedReleaseRelation.setUsedProjectRelations(listOfSelectedProjectRelationships);
+                }
                 usedReleaseRelation.setUsedReleaseRelations(listOfSelectedRelationships);
                 client.addReleaseRelationsUsage(usedReleaseRelation);
             }
@@ -642,15 +693,12 @@ public class ProjectPortlet extends FossologyAwarePortlet {
 
             JSONArray jsonResponse = createJSONArray();
             ThriftJsonSerializer thriftJsonSerializer = new ThriftJsonSerializer();
-            final boolean isNotClearingAdmin = !PermissionUtils.isUserAtLeast(UserGroup.CLEARING_ADMIN, user);
             for (Project project : projects) {
                 try {
                     JSONObject row = createJSONObject();
                     row.put("id", project.getId());
                     row.put("clearing", JsonHelpers.toJson(project.getReleaseClearingStateSummary(), thriftJsonSerializer));
-                    if (isNotClearingAdmin) {
-                        row.put(WRITE_ACCESS_USER, PermissionUtils.makePermission(project, user).isActionAllowed(RequestedAction.WRITE));
-                    }
+                    row.put(WRITE_ACCESS_USER, PermissionUtils.makePermission(project, user).isActionAllowed(RequestedAction.WRITE));
                     ProjectClearingState clearingState = project.getClearingState();
                     if (clearingState == null) {
                         row.put("clearingstate", "Unknown");
@@ -1013,7 +1061,6 @@ public class ProjectPortlet extends FossologyAwarePortlet {
         List<Organization> organizations = UserUtils.getOrganizations(request);
         request.setAttribute(PortalConstants.ORGANIZATIONS, organizations);
         request.setAttribute(IS_USER_ADMIN, PermissionUtils.isUserAtLeast(UserGroup.SW360_ADMIN, user) ? "Yes" : "No");
-        request.setAttribute(IS_USER_AT_LEAST_CLEARING_ADMIN, PermissionUtils.isUserAtLeast(UserGroup.CLEARING_ADMIN, user));
         for (Project._Fields filteredField : projectFilteredFields) {
             String parameter = request.getParameter(filteredField.toString());
             request.setAttribute(filteredField.getFieldName(), nullToEmpty(parameter));
@@ -1115,6 +1162,7 @@ public class ProjectPortlet extends FossologyAwarePortlet {
                 addProjectBreadcrumb(request, response, project);
                 request.setAttribute(PROJECT_OBLIGATIONS, SW360Utils.getProjectObligations(project));
                 request.setAttribute(IS_USER_ADMIN, PermissionUtils.isUserAtLeast(UserGroup.SW360_ADMIN, user) ? "Yes" : "No");
+
                 if (PortalConstants.IS_PROJECT_OBLIGATIONS_ENABLED && project.getReleaseIdToUsageSize() > 0) {
                     request.setAttribute(OBLIGATION_DATA, loadLinkedObligations(request, project));
                 }
@@ -1166,6 +1214,8 @@ public class ProjectPortlet extends FossologyAwarePortlet {
                 request.setAttribute(PortalConstants.RELATIONSHIPS, fetchReleaseRelationships(mappedProjectLinks));
                 request.setAttribute(PortalConstants.PROJECT_RELEASE_TO_RELATION, fetchProjectReleaseToRelation(mappedProjectLinks));
                 request.setAttribute(PortalConstants.PROJECT_USED_RELEASE_RELATIONS, fetchUsedReleaseRelationships(id));
+                request.setAttribute(PortalConstants.LINKED_PROJECT_RELATION, fetchLinkedProjectRelations(mappedProjectLinks, id));
+                request.setAttribute(PortalConstants.USED_LINKED_PROJECT_RELATION, fetchUsedProjectRelationships(id));
                 addProjectBreadcrumb(request, response, project);
 
                 storePathsMapInRequest(request, mappedProjectLinks);
@@ -1197,19 +1247,43 @@ public class ProjectPortlet extends FossologyAwarePortlet {
         return jsonObject;
     }
 
-    private Set<ReleaseRelationship> fetchUsedReleaseRelationships(String projectId) {
-        Set<ReleaseRelationship> usedReleaseRealations = Sets.newHashSet();
+    private Set<ProjectRelationship> fetchLinkedProjectRelations(List<ProjectLink> mappedProjectLinks,
+            String projectId) {
+        return mappedProjectLinks.stream().filter(projectLink -> !projectLink.getId().equals(projectId))
+                .map(ProjectLink::getRelation).collect(Collectors.toSet());
+    }
+
+    private Set<String> filteredProjectIds(List<ProjectLink> filteredProjectLinks) {
+        return filteredProjectLinks.stream().map(ProjectLink::getId).collect(Collectors.toSet());
+    }
+
+    private List<UsedReleaseRelations> fetchUsedRelation(String projectId) {
+        List<UsedReleaseRelations> usedRelationList = null;
         try {
             ProjectService.Iface client = thriftClients.makeProjectClient();
-            List<UsedReleaseRelations> usedRelRelation = nullToEmptyList(
-                    client.getUsedReleaseRelationsByProjectId(projectId));
-            if (CommonUtils.isNotEmpty(usedRelRelation)) {
-                usedReleaseRealations = usedRelRelation.get(0).getUsedReleaseRelations();
-            }
+            usedRelationList = nullToEmptyList(client.getUsedReleaseRelationsByProjectId(projectId));
         } catch (TException exception) {
-            log.error("cannot retrieve information about release relations.", exception);
+            log.error("cannot retrieve information about project-release relations.", exception);
+        }
+        return usedRelationList;
+    }
+
+    private Set<ReleaseRelationship> fetchUsedReleaseRelationships(String projectId) {
+        Set<ReleaseRelationship> usedReleaseRealations = Sets.newHashSet();
+        List<UsedReleaseRelations> usedRelRelation = fetchUsedRelation(projectId);
+        if (CommonUtils.isNotEmpty(usedRelRelation)) {
+            usedReleaseRealations = usedRelRelation.get(0).getUsedReleaseRelations();
         }
         return usedReleaseRealations;
+    }
+
+    private Set<ProjectRelationship> fetchUsedProjectRelationships(String projectId) {
+        Set<ProjectRelationship> usedProjectRelations = null;
+        List<UsedReleaseRelations> usedRelRelation = fetchUsedRelation(projectId);
+        if (CommonUtils.isNotEmpty(usedRelRelation)) {
+            usedProjectRelations = usedRelRelation.get(0).getUsedProjectRelations();
+        }
+        return usedProjectRelations;
     }
 
     /**
@@ -1916,6 +1990,58 @@ public class ProjectPortlet extends FossologyAwarePortlet {
                     .filter(obligation -> ObligationStatus.FULFILLED.equals(obligation.getStatus())).count());
         }
         return 0;
+    }
+
+    private void serveClearingStatusonLoad(ResourceRequest request, ResourceResponse response)
+            throws IOException, PortletException {
+        User user = UserCacheHolder.getUserFromRequest(request);
+        String id = request.getParameter(PROJECT_ID);
+        ComponentService.Iface compClient = thriftClients.makeComponentClient();
+        ProjectService.Iface client = thriftClients.makeProjectClient();
+        Project project = null;
+        try {
+
+            project = client.getProjectById(id, user);
+            project = getWithFilledClearingStateSummary(project, user);
+        } catch (TException exp) {
+            log.error("Error while fetching Project id : " + id, exp);
+            return;
+        }
+
+        List<ProjectLink> mappedProjectLinks = createLinkedProjects(project, user);
+        request.setAttribute(PROJECT_LIST, mappedProjectLinks);
+        request.setAttribute("projectReleaseRelation", project.getReleaseIdToUsage());
+        Set<String> releaseIds = mappedProjectLinks.stream().map(ProjectLink::getLinkedReleases)
+                .filter(CommonUtils::isNotEmpty).flatMap(rList -> rList.stream()).filter(Objects::nonNull)
+                .map(ReleaseLink::getId).collect(Collectors.toSet());
+        request.setAttribute("relMainLineState", fillMainLineState(releaseIds, compClient, user));
+        include("/html/utils/ajax/linkedProjectsRows.jsp", request, response, PortletRequest.RESOURCE_PHASE);
+    }
+
+    private void serveClearingStatusList(ResourceRequest request, ResourceResponse response) {
+        ProjectService.Iface client = thriftClients.makeProjectClient();
+        User user = UserCacheHolder.getUserFromRequest(request);
+        String projectId = request.getParameter(DOCUMENT_ID);
+        List<Map<String, String>> clearingStatusList = new ArrayList<Map<String, String>>();
+        try {
+            clearingStatusList = client.getClearingStateInformationForListView(projectId, user);
+        } catch (TException e) {
+            log.error("Problem getting flat view of Clearing Status", e);
+        }
+        JSONArray clearingStatusData = createJSONArray();
+        for (int i = 0; i < clearingStatusList.size(); i++) {
+            JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
+            clearingStatusList.get(i).entrySet().stream()
+                    .forEach(entry -> jsonObject.put(entry.getKey(), entry.getValue()));
+            clearingStatusData.put(jsonObject);
+        }
+        JSONObject jsonResult = createJSONObject();
+        jsonResult.put("data", clearingStatusData);
+        try {
+            writeJSON(request, response, jsonResult);
+        } catch (IOException e) {
+            log.error("Problem rendering Clearing Status", e);
+        }
     }
 
     private void serveProjectList(ResourceRequest request, ResourceResponse response) throws IOException, PortletException {
