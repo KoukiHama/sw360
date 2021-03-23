@@ -28,6 +28,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.eclipse.sw360</groupId>
+            <artifactId>src-licenses</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.spdx</groupId>
             <artifactId>spdx-tools</artifactId>
             <exclusions>
