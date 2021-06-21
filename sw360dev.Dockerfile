@@ -14,6 +14,7 @@
 FROM maven:3.6.3-openjdk-11-slim
 MAINTAINER Maximilian Huber <maximilian.huber@tngtech.com>
 
+COPY scripts/docker-config/mvn-proxy-settings.xml /root/.m2/settings.xml
 ADD scripts/install-thrift.sh /install-thrift.sh
 RUN set -x \
  && apt-get update && apt-get install -y --no-install-recommends git \
