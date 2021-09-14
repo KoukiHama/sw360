@@ -113,13 +113,13 @@ def run():
 
     log['components'] = component_log
 
-    logFile = open('047_add_component_businessunit.log', 'w')
+    logFile = open('048_add_component_businessunit.log', 'w')
     json.dump(log, logFile, indent = 4, sort_keys = True)
     logFile.close()
 
     print ('\n')
     print ('------------------------------------------')
-    print ('Please check log file "047_add_component_businessunit.log" in this directory for details')
+    print ('Please check log file "048_add_component_businessunit.log" in this directory for details')
     print ('------------------------------------------')
 
 # --------------------------------
