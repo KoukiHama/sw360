@@ -113,6 +113,14 @@ public abstract class LinkedReleasesAndProjectsAwarePortlet extends AttachmentAw
         request.setAttribute(RELEASE_LIST, linkedReleaseRelations);
     }
 
+    protected void putDirectlyLinkedReleaseRelationsWithAccessibilityInRequest(PortletRequest request, Release release, User user) {
+        List<ReleaseLink> linkedReleaseRelations = SW360Utils.getLinkedReleaseRelationsWithAccessibility(release, thriftClients, log, user);
+        linkedReleaseRelations = linkedReleaseRelations.stream().filter(Objects::nonNull).sorted(Comparator.comparing(
+                rl -> rl.isAccessible() ? SW360Utils.getVersionedName(nullToEmptyString(rl.getName()), rl.getVersion()) : "~", String.CASE_INSENSITIVE_ORDER)
+                ).collect(Collectors.toList());
+        request.setAttribute(RELEASE_LIST, linkedReleaseRelations);
+    }
+    
     protected void putDirectlyLinkedReleasesInRequest(PortletRequest request, Project project) throws TException {
         List<ReleaseLink> linkedReleases = SW360Utils.getLinkedReleases(project, thriftClients, log);
         linkedReleases = linkedReleases.stream().filter(Objects::nonNull).sorted(Comparator.comparing(
@@ -121,6 +129,14 @@ public abstract class LinkedReleasesAndProjectsAwarePortlet extends AttachmentAw
         request.setAttribute(RELEASE_LIST, linkedReleases);
     }
 
+    protected void putDirectlyLinkedReleasesWithAccessibilityInRequest(PortletRequest request, Project project, User user) throws TException {
+        List<ReleaseLink> linkedReleases = SW360Utils.getLinkedReleasesWithAccessibility(project, thriftClients, log, user);
+        linkedReleases = linkedReleases.stream().filter(Objects::nonNull).sorted(Comparator.comparing(
+                rl -> rl.isAccessible() ? SW360Utils.getVersionedName(nullToEmptyString(rl.getName()), rl.getVersion()) : "~", String.CASE_INSENSITIVE_ORDER)
+                ).collect(Collectors.toList());
+        request.setAttribute(RELEASE_LIST, linkedReleases);
+    }
+    
     protected List<ProjectLink> createLinkedProjects(Project project, User user) {
         return createLinkedProjects(project, Function.identity(), user);
     }
@@ -245,13 +261,13 @@ public abstract class LinkedReleasesAndProjectsAwarePortlet extends AttachmentAw
             String id = branchId.split("_")[0];
             try {
                 Release release = client.getReleaseById(id, user);
-                putDirectlyLinkedReleaseRelationsInRequest(request, release);
+                putDirectlyLinkedReleaseRelationsWithAccessibilityInRequest(request, release, user);
             } catch (TException e) {
                 log.error("Error getting projects!", e);
                 throw new PortletException("cannot get projects", e);
             }
         } else {
-            putDirectlyLinkedReleaseRelationsInRequest(request, new Release());
+            putDirectlyLinkedReleaseRelationsWithAccessibilityInRequest(request, new Release(), user);
         }
         List<ReleaseLink> releaseLinkList = (List<ReleaseLink>) request.getAttribute(RELEASE_LIST);
         Set<String> releaseIds = releaseLinkList.stream().map(ReleaseLink::getId).collect(Collectors.toSet());

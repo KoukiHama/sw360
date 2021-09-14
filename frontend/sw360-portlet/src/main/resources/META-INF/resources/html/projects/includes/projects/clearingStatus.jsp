@@ -302,7 +302,12 @@ AUI().use('liferay-portlet-url', function () {
         function createClearingStatusTable(clearingStatusJsonData) {
             var clearingStatusTable;
             clearingStatusTable = datatables.create('#clearingStatusTable', {
-                data: clearingStatusJsonData.data,
+                data: clearingStatusJsonData.data.map(function(row){
+                	if(row.isAccessible === "false"){
+                		row["name"]="<liferay-ui:message key="inaccessible.release" />";
+                	}
+                	return row;
+                }),
                 columns: [
                     {title: "<liferay-ui:message key="name" />", data : "name", "defaultContent": "", render: {display: detailUrl}},
                     {title: "<liferay-ui:message key="type" />", data : "type", "defaultContent": ""},
@@ -311,6 +316,9 @@ AUI().use('liferay-portlet-url', function () {
                     {title: "<liferay-ui:message key="relation" />", data : "relation", "defaultContent": ""},
                     {title: "<liferay-ui:message key="main.licenses" />", data : "mainLicenses", "defaultContent": "", render: {display: mainLicenseUrl}},
                     {title: "", "data": function(row) {
+                    	if(row.isAccessible === "false"){
+                    		return "";
+                    	}
                         let ps=row.projectState;
                         let cs=row.clearingState;
                         if (ps === null || ps === undefined) ps="";
@@ -368,6 +376,7 @@ AUI().use('liferay-portlet-url', function () {
 
         function detailUrl(name, type, row)
         {
+            if(row.isAccessible === "true"){
             let url;
             if(row.isRelease === "true"){
                 url = makeReleaseViewUrl(row.id);
@@ -377,6 +386,9 @@ AUI().use('liferay-portlet-url', function () {
             }
             let viewUrl = $("<a></a>").attr("href",url).css("word-break","break-word").text(name);
             return viewUrl[0].outerHTML;
+            } else {
+                return "<liferay-ui:message key="inaccessible.release" />";
+            }
         }
 
         function mainLicenseUrl(mainLicenses, type, row)
@@ -395,6 +407,7 @@ AUI().use('liferay-portlet-url', function () {
 
         function renderActions(id, type, row)
         {
+            if(row.isAccessible === "true"){
             let url;
             if(row.isRelease === "true"){
                 url = makeReleaseUrl(id);
@@ -404,6 +417,10 @@ AUI().use('liferay-portlet-url', function () {
             }
 
             return createActions(url);
+
+            } else {
+                return "";
+            }
         }
 
         function createActions(url) {

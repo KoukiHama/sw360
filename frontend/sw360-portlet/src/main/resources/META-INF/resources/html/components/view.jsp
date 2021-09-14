@@ -34,6 +34,7 @@
 <jsp:useBean id="mainLicenseIds" class="java.lang.String" scope="request"/>
 <jsp:useBean id="name" class="java.lang.String" scope="request"/>
 <jsp:useBean id="totalRows" type="java.lang.Integer" scope="request"/>
+<jsp:useBean id="businessUnit" class="java.lang.String" scope="request"/>
 
 <core_rt:set var="programmingLanguages" value='<%=PortalConstants.PROGRAMMING_LANGUAGES%>'/>
 <core_rt:set var="operatingSystemsAutoC" value='<%=PortalConstants.OPERATING_SYSTEMS%>'/>
@@ -89,6 +90,18 @@
                                 <select class="form-control form-control-sm" id="component_type" name="<portlet:namespace/><%=Component._Fields.COMPONENT_TYPE%>">
                                     <option value="<%=PortalConstants.NO_FILTER%>" class="textlabel stackedLabel"></option>
                                     <sw360:DisplayEnumOptions type="<%=ComponentType.class%>" selectedName="${componentType}" useStringValues="true"/>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="group"><liferay-ui:message key="group" /></label>
+                                <select class="form-control form-control-sm" id="group" name="<portlet:namespace/><%=Component._Fields.BUSINESS_UNIT%>">
+                                    <option value=""
+                                            <core_rt:if test="${empty businessUnit}"> selected="selected"</core_rt:if>></option>
+                                    <core_rt:forEach items="${organizations}" var="org">
+                                        <option value="${org.name}"
+                                                <core_rt:if test="${org.name == businessUnit}"> selected="selected"</core_rt:if>
+                                        ><sw360:out value="${org.name}"/></option>
+                                    </core_rt:forEach>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -290,7 +303,13 @@
             function createComponentsTable() {
                 let columns = [
                     {"title": "<liferay-ui:message key="vendor" />", data: "vndrs", render: {display: renderVendorNames}},
-                    {"title": "<liferay-ui:message key="component.name" />", data: "name", render: {display: renderComponentNameLink}},
+                    {"title": "<liferay-ui:message key="component.name" />", data: function(row){
+                        if(row.isAccessible) {
+                            return row["name"];
+                        } else {
+                            return "<liferay-ui:message key="inaccessible.component" />";
+                        }
+                    }, render: {display: renderComponentNameLink}},
                     {"title": "<liferay-ui:message key="main.licenses" />", data: "lics", render: {display: renderLicenseLink}},
                     {"title": "<liferay-ui:message key="component.type" />", data: "cType"},
                     {"title": "<liferay-ui:message key="actions" />", data: "id", render: {display: renderComponentActions}, className: 'two actions', orderable: false }
@@ -321,30 +340,38 @@
             }
 
             function renderComponentActions(id, type, row) {
-                var $actions = $('<div>', {
-				    'class': 'actions'
-                    }),
-                    $editAction = render.linkTo(
-                        makeComponentUrl(id, '<%=PortalConstants.PAGENAME_EDIT%>'),
-                        "",
-                        '<svg class="lexicon-icon" title="<liferay-ui:message key="edit" />"><use href="/o/org.eclipse.sw360.liferay-theme/images/clay/icons.svg#pencil"/></svg>'
-                    ),
-                    $deleteAction = $('<svg>', {
-                        'class': 'delete lexicon-icon',
-                        'data-component-id': id,
-                        'data-component-name': row.name,
-                        'data-component-release-count': row.lRelsSize,
-                        'data-component-attachment-count': row.attsSize,
-                    });
-            
-                $deleteAction.append($('<title>Delete</title><use href="/o/org.eclipse.sw360.liferay-theme/images/clay/icons.svg#trash"/>'));
-
-                $actions.append($editAction, $deleteAction);
-                return $actions[0].outerHTML;
+                if(row.isAccessible) {
+                    var $actions = $('<div>', {
+                        'class': 'actions'
+                        }),
+                        $editAction = render.linkTo(
+                            makeComponentUrl(id, '<%=PortalConstants.PAGENAME_EDIT%>'),
+                            "",
+                            '<svg class="lexicon-icon" title="<liferay-ui:message key="edit" />"><use href="/o/org.eclipse.sw360.liferay-theme/images/clay/icons.svg#pencil"/></svg>'
+                        ),
+                        $deleteAction = $('<svg>', {
+                            'class': 'delete lexicon-icon',
+                            'data-component-id': id,
+                            'data-component-name': row.name,
+                            'data-component-release-count': row.lRelsSize,
+                            'data-component-attachment-count': row.attsSize,
+                        });
+                    
+                    $deleteAction.append($('<title>Delete</title><use href="/o/org.eclipse.sw360.liferay-theme/images/clay/icons.svg#trash"/>'));
+                    
+                    $actions.append($editAction, $deleteAction);
+                    return $actions[0].outerHTML;
+                } else {
+                    return "";
+                }
             }
 
             function renderComponentNameLink(name, type, row) {
-                return render.linkTo(replaceFriendlyUrlParameter('<%=friendlyComponentURL%>', row.id, '<%=PortalConstants.PAGENAME_DETAIL%>'), name);
+                if(row.isAccessible) {
+                    return render.linkTo(replaceFriendlyUrlParameter('<%=friendlyComponentURL%>', row.id, '<%=PortalConstants.PAGENAME_DETAIL%>'), name);
+                } else {
+                    return "<liferay-ui:message key="inaccessible.component" />";
+                }
             }
 
             function renderLicenseLink(lics, type, row) {
@@ -424,7 +451,7 @@
 
                 if (numberOfReleases > 0) {
                     dialog.warn(
-						'<liferay-ui:message key="the.component.x.cannot.be.deleted.since.it.contains.y.releases.please.delete.the.releases.first" />',
+            '<liferay-ui:message key="the.component.x.cannot.be.deleted.since.it.contains.y.releases.please.delete.the.releases.first" />',
                         {
                             name: name,
                             releaseCount: numberOfReleases

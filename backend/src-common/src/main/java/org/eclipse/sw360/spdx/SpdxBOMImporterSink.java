@@ -9,6 +9,7 @@
  */
 package org.eclipse.sw360.spdx;
 
+import org.eclipse.sw360.datahandler.common.CommonUtils;
 import org.eclipse.sw360.datahandler.db.ComponentDatabaseHandler;
 import org.eclipse.sw360.datahandler.db.ProjectDatabaseHandler;
 import org.eclipse.sw360.datahandler.thrift.*;
@@ -39,6 +40,12 @@ public class SpdxBOMImporterSink {
 
     public Response addComponent(Component component) throws SW360Exception {
         log.debug("create Component { name='" + component.getName() + "' }");
+        
+        if(CommonUtils.isNotNullEmptyOrWhitespace(user.getDepartment())) {
+            component.setBusinessUnit(user.getDepartment());
+        } else {
+            log.error("Could not get the user department. component name=" +  component.getName());
+        }
         final AddDocumentRequestSummary addDocumentRequestSummary = componentDatabaseHandler.addComponent(component,
                 user.getEmail());
 
