@@ -104,7 +104,7 @@ public class ReleaseHelper implements ExporterHelper<Release> {
     @Override
     public SubTable makeRows(Release release) throws SW360Exception {
         List<String> row = new ArrayList<>();
-        if(release.isSetPermissions() && release.getPermissions().get(RequestedAction.READ)) {
+        if (release.isSetPermissions() && release.getPermissions().get(RequestedAction.READ)) {
             for (Release._Fields renderedField : RELEASE_RENDERED_FIELDS) {
                 addFieldValueToRow(row, renderedField, release);
             }

@@ -53,6 +53,7 @@ import static org.eclipse.sw360.datahandler.common.WrappedException.wrapTExcepti
 import static org.eclipse.sw360.portal.common.PortalConstants.PARENT_BRANCH_ID;
 import static org.eclipse.sw360.portal.common.PortalConstants.PROJECT_LIST;
 import static org.eclipse.sw360.portal.common.PortalConstants.RELEASE_LIST;
+import static org.eclipse.sw360.portal.common.PortalConstants.TOTAL_INACCESSIBLE_ROWS;
 
 /**
  * linked releases and projects-aware portlet implementation
@@ -119,6 +120,14 @@ public abstract class LinkedReleasesAndProjectsAwarePortlet extends AttachmentAw
                 rl -> rl.isAccessible() ? SW360Utils.getVersionedName(nullToEmptyString(rl.getName()), rl.getVersion()) : "~", String.CASE_INSENSITIVE_ORDER)
                 ).collect(Collectors.toList());
         request.setAttribute(RELEASE_LIST, linkedReleaseRelations);
+        
+        int totalInaccessibleRow = 0;
+        for (ReleaseLink link : linkedReleaseRelations) {
+            if (!link.isAccessible()) {
+                totalInaccessibleRow++;
+            }
+        }               
+        request.setAttribute(TOTAL_INACCESSIBLE_ROWS, totalInaccessibleRow);
     }
     
     protected void putDirectlyLinkedReleasesInRequest(PortletRequest request, Project project) throws TException {
@@ -135,6 +144,14 @@ public abstract class LinkedReleasesAndProjectsAwarePortlet extends AttachmentAw
                 rl -> rl.isAccessible() ? SW360Utils.getVersionedName(nullToEmptyString(rl.getName()), rl.getVersion()) : "~", String.CASE_INSENSITIVE_ORDER)
                 ).collect(Collectors.toList());
         request.setAttribute(RELEASE_LIST, linkedReleases);
+        
+        int totalInaccessibleRow = 0;
+        for (ReleaseLink link : linkedReleases) {
+            if (!link.isAccessible()) {
+                totalInaccessibleRow++;
+            }
+        }               
+        request.setAttribute(TOTAL_INACCESSIBLE_ROWS, totalInaccessibleRow);
     }
     
     protected List<ProjectLink> createLinkedProjects(Project project, User user) {

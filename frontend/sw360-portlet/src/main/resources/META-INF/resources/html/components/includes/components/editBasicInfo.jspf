@@ -141,22 +141,14 @@
         <td>
             <div class="form-group">
                 <label class="mandatory" for="group"><liferay-ui:message key="group" /></label>
-                <select class="form-control" id="group" name="<portlet:namespace/><%=Component._Fields.BUSINESS_UNIT%>" required>
-                    <core_rt:forEach items="${organizations}" var="org">
-                        <option value="${org.name}" class="textlabel stackedLabel"
-                        <core_rt:if test="${org.name == component.businessUnit}"> selected="selected"</core_rt:if>
-                        >${org.name}</option>
-                    </core_rt:forEach>
-                </select>
+                <input id="group" class="form-control" name="<portlet:namespace/><%=Component._Fields.BUSINESS_UNIT%>" type="text"
+                    placeholder="<liferay-ui:message key="enter.group" />" required
+                    value="<sw360:out value="${component.businessUnit}"/>"/>
                 <div class="invalid-feedback">
                         <liferay-ui:message key="please.enter.a.group" />
                 </div>
             </div>
         </td>
-        <td></td>
-        <td></td>
-    </tr>
-    <tr>
         <td>
             <sw360:DisplayUserEdit email="${component.componentOwner}"
                                    id="<%=Component._Fields.COMPONENT_OWNER.toString()%>"
@@ -169,6 +161,8 @@
                     placeholder="<liferay-ui:message key="enter.owner.accounting.unit" />" value="<sw360:out value="${component.ownerAccountingUnit}"/>"/>
             </div>
         </td>
+    </tr>
+    <tr>
         <td>
             <div class="form-group">
                 <label for="ownerGroup"><liferay-ui:message key="owner.billing.group" /></label>
@@ -176,8 +170,6 @@
                     placeholder="<liferay-ui:message key="enter.owners.billing.group" />" value="<sw360:out value="${component.ownerGroup}"/>"/>
             </div>
         </td>
-    </tr>
-    <tr>
         <td>
             <div class="form-group">
                 <label for="ownerCountry"><liferay-ui:message key="owner.country" /></label>
@@ -190,8 +182,6 @@
         <td>
             <sw360:DisplayUserEdit emails="${component.moderators}" id="<%=Component._Fields.MODERATORS.toString()%>"
                                    description="moderators" multiUsers="true" readonly="false"/>
-        </td>
-        <td>
         </td>
     </tr>
 </table>

@@ -254,6 +254,7 @@ public class PortalConstants {
     public static final String PROJECT_LIST = "projectList";
     public static final String ALL_SUB_PROJECT_LINK = "allSubProjectLink";
     public static final String RELEASE_LIST = "releaseList";
+    public static final String TOTAL_INACCESSIBLE_ROWS = "totalInaccessibleRows";
     public static final String PROJECT_SEARCH = "projectSearch";
     public static final String RELEASE_SEARCH = "releaseSearch";
     public static final String RELEASE_SEARCH_BY_VENDOR = "releaseSearchByVendor";

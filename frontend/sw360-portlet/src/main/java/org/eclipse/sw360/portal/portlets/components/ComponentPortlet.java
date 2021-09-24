@@ -717,7 +717,7 @@ public class ComponentPortlet extends FossologyAwarePortlet {
                 setUsingDocs(request, user, client, releaseIds);
             
             } catch (TException e) {
-                if(e instanceof SW360Exception) {
+                if (e instanceof SW360Exception) {
                     SW360Exception sw360Exp = (SW360Exception)e;
                     if (sw360Exp.getErrorCode() == 403) {
                         log.error("This component is restricted and / or not accessible.", sw360Exp);
@@ -732,7 +732,7 @@ public class ComponentPortlet extends FossologyAwarePortlet {
                 }
             }
         } else {
-            if(request.getAttribute(COMPONENT) == null) {
+            if (request.getAttribute(COMPONENT) == null) {
                 Component component = new Component();
                 component.setBusinessUnit(user.getDepartment());
                 request.setAttribute(COMPONENT, component);
@@ -820,7 +820,7 @@ public class ComponentPortlet extends FossologyAwarePortlet {
                     || PermissionUtils.isUserAtLeastDesiredRoleInSecondaryGroup(UserGroup.ECC_ADMIN, allSecRoles) ? "Yes" : "No");
         
         } catch (TException e) {
-            if(e instanceof SW360Exception) {
+            if (e instanceof SW360Exception) {
                 SW360Exception sw360Exp = (SW360Exception)e;
                 if (sw360Exp.getErrorCode() == 403) {
                     log.error("This release or related components are restricted and / or not accessible.", sw360Exp);
@@ -864,6 +864,7 @@ public class ComponentPortlet extends FossologyAwarePortlet {
             addComponentBreadcrumb(request, response, component);
             request.setAttribute(COMPONENT, component);
             request.setAttribute(RELEASE_LIST, Collections.emptyList());
+            request.setAttribute(TOTAL_INACCESSIBLE_ROWS, 0);
             setUsingDocs(request, null, user, client);
             request.setAttribute(RELEASE, release);
             request.setAttribute(PortalConstants.ATTACHMENTS, Collections.emptySet());
@@ -1353,7 +1354,7 @@ public class ComponentPortlet extends FossologyAwarePortlet {
                 addComponentBreadcrumb(request, response, component);
                 
             } catch (TException e) {
-                if(e instanceof SW360Exception) {
+                if (e instanceof SW360Exception) {
                     SW360Exception sw360Exp = (SW360Exception)e;
                     if (sw360Exp.getErrorCode() == 403) {
                         log.error("This component is restricted and / or not accessible.", sw360Exp);
@@ -1456,7 +1457,7 @@ public class ComponentPortlet extends FossologyAwarePortlet {
             }
 
         } catch (TException e) {
-            if(e instanceof SW360Exception) {
+            if (e instanceof SW360Exception) {
                 SW360Exception sw360Exp = (SW360Exception)e;
                 if (sw360Exp.getErrorCode() == 403) {
                     log.error("This release or related components are restricted and / or not accessible.", sw360Exp);
@@ -1750,6 +1751,9 @@ public class ComponentPortlet extends FossologyAwarePortlet {
                 ComponentPortletUtils.updateComponentFromRequest(request, component);
                 String ModerationRequestCommentMsg = request.getParameter(MODERATION_REQUEST_COMMENT);
                 user.setCommentMadeDuringModerationRequest(ModerationRequestCommentMsg);
+                if (CommonUtils.isNullEmptyOrWhitespace(component.getBusinessUnit())) {
+                    component.setBusinessUnit(user.getDepartment());
+                }
                 RequestStatus requestStatus = client.updateComponent(component, user);
                 setSessionMessage(request, requestStatus, "Component", "update", component.getName());
                 if (RequestStatus.DUPLICATE.equals(requestStatus) || RequestStatus.DUPLICATE_ATTACHMENT.equals(requestStatus) ||
@@ -1772,6 +1776,9 @@ public class ComponentPortlet extends FossologyAwarePortlet {
             } else {
                 Component component = new Component();
                 ComponentPortletUtils.updateComponentFromRequest(request, component);
+                if (CommonUtils.isNullEmptyOrWhitespace(component.getBusinessUnit())) {
+                    component.setBusinessUnit(user.getDepartment());
+                }
                 AddDocumentRequestSummary summary = client.addComponent(component, user);
 
                 AddDocumentRequestStatus status = summary.getRequestStatus();

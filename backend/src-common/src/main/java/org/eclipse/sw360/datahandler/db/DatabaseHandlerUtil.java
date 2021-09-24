@@ -161,7 +161,7 @@ public class DatabaseHandlerUtil {
                     elementFullName = SW360Utils.printName(release);
                     linkedElement = (T) release;
                     isAccessibleElement = compDBHandler.isReleaseActionAllowed(release, user, RequestedAction.READ);
-                    if(!isAccessibleElement) {
+                    if (!isAccessibleElement) {
                         inaccessibleElementLabel = SW360Utils.INACCESSIBLE_RELEASE;
                     }
                 }

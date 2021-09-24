@@ -110,8 +110,8 @@ public class ComponentSearchHandler {
     public List<Component> searchAccessibleComponents(String text, final Map<String , Set<String > > subQueryRestrictions, User user ){
         List<Component> resultComponentList = connector.searchViewWithRestrictions(Component.class, luceneSearchView, text, subQueryRestrictions);
         List<Component> componentList = new ArrayList<Component>();
-        for(Component component : resultComponentList){
-            if (makePermission(component, user).isActionAllowed(RequestedAction.READ)){
+        for (Component component : resultComponentList) {
+            if (makePermission(component, user).isActionAllowed(RequestedAction.READ)) {
                 componentList.add(component);
             }
         }
@@ -120,7 +120,7 @@ public class ComponentSearchHandler {
 
     public List<Component> searchWithAccessibility(String text, final Map<String , Set<String > > subQueryRestrictions, User user ){
         List<Component> resultComponentList = connector.searchViewWithRestrictions(Component.class, luceneSearchView, text, subQueryRestrictions);
-        for(Component component : resultComponentList){
+        for (Component component : resultComponentList) {
             makePermission(component, user).fillPermissionsInOther(component);
         }
         return resultComponentList;

@@ -91,7 +91,7 @@ public class SW360Utils {
     public static Joiner spaceJoiner = Joiner.on(" ");
     public static Joiner commaJoiner = Joiner.on(", ");
 
-    public static String INACCESSIBLE_RELEASE ="InaccessibleRelease";
+    public static String INACCESSIBLE_RELEASE ="RestrictedRelease";
 
     private SW360Utils() {
         // Utility class with only static functions
@@ -559,17 +559,19 @@ public class SW360Utils {
     }
 
     public static <T> Map<String, T> putAccessibleReleaseNamesInMap(Map<String, T> map, List<Release> releases, User user, T inaccessibleValue) {
-        if(map == null || releases == null) {
+        if (map == null || releases == null) {
             return Collections.emptyMap();
         }
         Map<String, T> releaseNamesMap = new HashMap<>();
         int inaccessbileReleaseCount = 0;
-        for(Release release : releases) {
-            if(release.isSetPermissions() && release.getPermissions().get(RequestedAction.READ)) {
-                releaseNamesMap.put(printName(release), map.get(release.getId()));
-            } else {
-                inaccessbileReleaseCount++;
-                releaseNamesMap.put(String.format("%s%d", INACCESSIBLE_RELEASE, inaccessbileReleaseCount), inaccessibleValue);
+        if (!CommonUtils.isNullOrEmptyCollection(releases)) {
+            for (Release release : releases) {
+                if (release.isSetPermissions() && release.getPermissions().get(RequestedAction.READ)) {
+                    releaseNamesMap.put(printName(release), map.get(release.getId()));
+                } else {
+                    inaccessbileReleaseCount++;
+                    releaseNamesMap.put(String.format("%s%d", INACCESSIBLE_RELEASE, inaccessbileReleaseCount), inaccessibleValue);
+                }
             }
         }
         return releaseNamesMap;

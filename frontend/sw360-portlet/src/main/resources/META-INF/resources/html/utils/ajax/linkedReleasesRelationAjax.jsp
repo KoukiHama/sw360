@@ -61,29 +61,5 @@
                 </td>
             </tr>
         </core_rt:when>
-        <core_rt:otherwise>
-            <tr id="releaseLinkRow${loop.count}" >
-                <td>
-                        <liferay-ui:message key="inaccessible.release" />
-                </td>
-                <td>
-                    <div class="form-group">
-                        <input type="hidden" value="${releaseLink.id}" name="<portlet:namespace/><%=Release._Fields.RELEASE_ID_TO_RELATIONSHIP%><%=ReleaseLink._Fields.ID%>">
-                    </div>
-                </td>
-                <td>
-                </td>
-                <td>
-                    <div class="form-group">
-                        <input id="releaseRelation" type="hidden" 
-                                name="<portlet:namespace/><%=Release._Fields.RELEASE_ID_TO_RELATIONSHIP%><%=ReleaseLink._Fields.RELEASE_RELATIONSHIP%>"
-                                value="${releaseLink.releaseRelationship.getValue()}" 
-                                >
-                    </div>
-                </td>
-                <td class="content-middle">
-                </td>
-            </tr>
-        </core_rt:otherwise>
     </core_rt:choose>
 </core_rt:forEach>

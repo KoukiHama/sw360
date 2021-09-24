@@ -241,9 +241,9 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
     
     public List<Release> getRecentReleasesWithAccessibility(User user) {
         List<Release> releaseList = releaseRepository.getRecentReleases();
-        for(Release release : releaseList) {
+        for (Release release : releaseList) {
             release.setPermissions(makePermission(release, user).getPermissionMap());
-            for(RequestedAction action : RequestedAction.values()) {
+            for (RequestedAction action : RequestedAction.values()) {
                 release.getPermissions().put(action, isReleaseActionAllowed(release, user, action));
             }
         }
@@ -326,7 +326,7 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
     public Component getAccessibleComponent(String id, User user) throws SW360Exception {
         Component component = getComponent(id, user);
         Map<RequestedAction, Boolean> permissions = component.getPermissions();
-        if(!permissions.get(RequestedAction.READ)) {
+        if (!permissions.get(RequestedAction.READ)) {
             throw fail(403, "Could not fetch component because access is denied! id=" + id);
         }
         return component;
@@ -352,7 +352,7 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
 
     public Release getAccessibleRelease(String id, User user) throws SW360Exception {
         Release release = getRelease(id, user);
-        if(!isReleaseActionAllowed(release, user, RequestedAction.READ)) {
+        if (!isReleaseActionAllowed(release, user, RequestedAction.READ)) {
             throw fail(403, "Could not access the release! id=" + id);
         }
         return release;
@@ -1671,9 +1671,11 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
 
     List<ReleaseLink> getLinkedReleasesWithAccessibility(Project project, Deque<String> visitedIds, User user) {
         List<ReleaseLink> releaseLinkList = getLinkedReleases(project.getReleaseIdToUsage(), visitedIds);
-        for(ReleaseLink releaseLink : releaseLinkList) {
-            Release release = releaseRepository.get(releaseLink.getId());
-            releaseLink.setAccessible(isReleaseActionAllowed(release, user, RequestedAction.READ));
+        if (!CommonUtils.isNullOrEmptyCollection(releaseLinkList)) {
+            for (ReleaseLink releaseLink : releaseLinkList) {
+                Release release = releaseRepository.get(releaseLink.getId());
+                releaseLink.setAccessible(isReleaseActionAllowed(release, user, RequestedAction.READ));
+            }
         }
         return releaseLinkList;
     }
@@ -1688,21 +1690,22 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
 
     public List<ReleaseLink> getLinkedReleasesWithAccessibility(Map<String, ?> relations, User user) {
         List<ReleaseLink> releaseLinkList = getLinkedReleases(relations, new ArrayDeque<>());
-        
-        for(ReleaseLink releaseLink : releaseLinkList) {
-            Release release = releaseRepository.get(releaseLink.getId());
-            releaseLink.setAccessible(isReleaseActionAllowed(release, user, RequestedAction.READ));
+        if (!CommonUtils.isNullOrEmptyCollection(releaseLinkList)) {
+            for (ReleaseLink releaseLink : releaseLinkList) {
+                Release release = releaseRepository.get(releaseLink.getId());
+                releaseLink.setAccessible(isReleaseActionAllowed(release, user, RequestedAction.READ));
+            }
         }
         return releaseLinkList;
     }
     
     public boolean isReleaseActionAllowed(Release release, User user, RequestedAction action) {
         boolean isAllowed = false;
-        switch(action){
+        switch (action) {
             case READ:
                 boolean isComponentAccessible = false;
                 String componentId = release.getComponentId();
-                if(CommonUtils.isNotNullEmptyOrWhitespace(componentId)) {
+                if (CommonUtils.isNotNullEmptyOrWhitespace(componentId)) {
                     Component component = componentRepository.get(componentId);
                     isComponentAccessible = makePermission(component, user).isActionAllowed(RequestedAction.READ);
                 }
@@ -1816,8 +1819,8 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
     
     private List<Release> getAccessibleReleaseList(List<Release> releaseList, User user) {
         List<Release> resultList = new ArrayList<Release>();
-        for(Release release : releaseList) {
-            if(isReleaseActionAllowed(release, user, RequestedAction.READ)) {
+        for (Release release : releaseList) {
+            if (isReleaseActionAllowed(release, user, RequestedAction.READ)) {
                 resultList.add(release);
             }
         }
@@ -1848,9 +1851,9 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
 
     public List<Release> getDetailedReleasesWithAccessibilityForExport(Set<String> ids, User user) {
         List<Release> releaseList = releaseRepository.makeSummary(SummaryType.DETAILED_EXPORT_SUMMARY, ids);
-        for(Release release : releaseList) {
+        for (Release release : releaseList) {
             release.setPermissions(makePermission(release, user).getPermissionMap());
-            for(RequestedAction action : RequestedAction.values()) {
+            for (RequestedAction action : RequestedAction.values()) {
                 release.getPermissions().put(action, isReleaseActionAllowed(release, user, action));
             }
         }
@@ -1945,7 +1948,7 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
     public Component getAccessibleComponentForEdit(String id, User user) throws SW360Exception {
         Component component = getComponentForEdit(id, user);
         Map<RequestedAction, Boolean> permissions = component.getPermissions();
-        if(!permissions.get(RequestedAction.READ)) {
+        if (!permissions.get(RequestedAction.READ)) {
             throw fail(403, "Could not fetch component for edit, because access is denied! id=" + id);
         }
         return component;
@@ -1984,7 +1987,7 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
 
     public Release getAccessibleReleaseForEdit(String id, User user) throws SW360Exception {
         Release release = getReleaseForEdit(id, user);
-        if(!isReleaseActionAllowed(release, user, RequestedAction.READ)) {
+        if (!isReleaseActionAllowed(release, user, RequestedAction.READ)) {
             throw fail(403, "Could not access the release for edit! id=" + id);
         }
         return release;
@@ -2004,7 +2007,7 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
 
     public Set<Component> getUsingComponentsWithAccessibility(String releaseId, User user) {
         Set<Component> componentSet = componentRepository.getUsingComponents(releaseId);
-        for(Component component : componentSet) {
+        for (Component component : componentSet) {
             makePermission(component, user).fillPermissions();
         }
         return componentSet;
@@ -2016,7 +2019,7 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
 
     public Set<Component> getUsingComponentsWithAccessibility(Set<String> releaseIds, User user) {
         Set<Component> componentSet = componentRepository.getUsingComponents(releaseIds);
-        for(Component component : componentSet) {
+        for (Component component : componentSet) {
             makePermission(component, user).fillPermissions();
         }
         return componentSet;
@@ -2104,9 +2107,9 @@ public class ComponentDatabaseHandler extends AttachmentAwareDatabaseHandler {
         List<Component> allComponentList = componentRepository.getRecentComponentsSummary(-1, user);
         List<Component> componentList = new ArrayList<Component>();
         int componentNumber = 0;
-        for(Component component : allComponentList) {
-            if(0 <= limit){
-                if(limit == componentNumber){
+        for (Component component : allComponentList) {
+            if (0 <= limit) {
+                if (limit == componentNumber) {
                     break;
                 }
             }

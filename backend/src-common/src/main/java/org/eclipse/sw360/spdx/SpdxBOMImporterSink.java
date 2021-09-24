@@ -41,7 +41,7 @@ public class SpdxBOMImporterSink {
     public Response addComponent(Component component) throws SW360Exception {
         log.debug("create Component { name='" + component.getName() + "' }");
         
-        if(CommonUtils.isNotNullEmptyOrWhitespace(user.getDepartment())) {
+        if (CommonUtils.isNotNullEmptyOrWhitespace(user.getDepartment())) {
             component.setBusinessUnit(user.getDepartment());
         } else {
             log.error("Could not get the user department. component name=" +  component.getName());
@@ -50,7 +50,7 @@ public class SpdxBOMImporterSink {
                 user.getEmail());
 
         final String componentId = addDocumentRequestSummary.getId();
-        if(componentId == null || componentId.isEmpty()) {
+        if (componentId == null || componentId.isEmpty()) {
             throw new SW360Exception("Id of added component should not be empty. " + addDocumentRequestSummary.toString());
         }
         return new Response(componentId, AddDocumentRequestStatus.SUCCESS.equals(addDocumentRequestSummary.getRequestStatus()));

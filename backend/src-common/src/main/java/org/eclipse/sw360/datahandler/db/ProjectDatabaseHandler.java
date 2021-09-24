@@ -1498,17 +1498,17 @@ public class ProjectDatabaseHandler extends AttachmentAwareDatabaseHandler {
                 return;
             Release rel = componentDatabaseHandler.getRelease(releaseId, user);
             
-            if(!isInaccessibleLinkMasked || componentDatabaseHandler.isReleaseActionAllowed(rel, user, RequestedAction.READ)) {
-	            Map<String, ReleaseRelationship> releaseIdToRelationship = rel.getReleaseIdToRelationship();
-	            releaseOrigin.put(releaseId, SW360Utils.printName(rel));
-	            Map<String, String> row = createReleaseCSRow(relation, projectMailLineState, rel, clearingStatusList, user, comment);
-	            if (releaseIdToRelationship != null && !releaseIdToRelationship.isEmpty()) {
-	                flattenlinkedReleaseOfRelease(releaseIdToRelationship, projectOrigin, releaseOrigin, clearingStatusList,
-	                            user, isInaccessibleLinkMasked);
-	            }
-	            releaseOrigin.remove(releaseId);
-	            row.put("projectOrigin", String.join(" -> ", projectOrigin.values()));
-	            row.put("releaseOrigin", String.join(" -> ", releaseOrigin.values()));
+            if (!isInaccessibleLinkMasked || componentDatabaseHandler.isReleaseActionAllowed(rel, user, RequestedAction.READ)) {
+                Map<String, ReleaseRelationship> releaseIdToRelationship = rel.getReleaseIdToRelationship();
+                releaseOrigin.put(releaseId, SW360Utils.printName(rel));
+                Map<String, String> row = createReleaseCSRow(relation, projectMailLineState, rel, clearingStatusList, user, comment);
+                if (releaseIdToRelationship != null && !releaseIdToRelationship.isEmpty()) {
+                    flattenlinkedReleaseOfRelease(releaseIdToRelationship, projectOrigin, releaseOrigin, clearingStatusList,
+                                user, isInaccessibleLinkMasked);
+                }
+                releaseOrigin.remove(releaseId);
+                row.put("projectOrigin", String.join(" -> ", projectOrigin.values()));
+                row.put("releaseOrigin", String.join(" -> ", releaseOrigin.values()));
             } else {
                 Map<String, String> row = createInaccessibleReleaseCSRow(clearingStatusList);
                 row.put("projectOrigin", "");
@@ -1528,17 +1528,17 @@ public class ProjectDatabaseHandler extends AttachmentAwareDatabaseHandler {
                 return;
             Release rel = componentDatabaseHandler.getRelease(releaseId, user);
             
-            if(!isInaccessibleLinkMasked || componentDatabaseHandler.isReleaseActionAllowed(rel, user, RequestedAction.READ)) {
-	            Map<String, ReleaseRelationship> subReleaseIdToRelationship = rel.getReleaseIdToRelationship();
-	            releaseOrigin.put(releaseId, SW360Utils.printName(rel));
-	            Map<String, String> row = createReleaseCSRow(relation, projectMailLineState, rel, clearingStatusList, user, "");
-	            if (subReleaseIdToRelationship != null && !subReleaseIdToRelationship.isEmpty()) {
-	                flattenlinkedReleaseOfRelease(subReleaseIdToRelationship, projectOrigin, releaseOrigin,
-	                            clearingStatusList, user, isInaccessibleLinkMasked);
-	            }
-	            releaseOrigin.remove(releaseId);
-	            row.put("projectOrigin", String.join(" -> ", projectOrigin.values()));
-	            row.put("releaseOrigin", String.join(" -> ", releaseOrigin.values()));
+            if (!isInaccessibleLinkMasked || componentDatabaseHandler.isReleaseActionAllowed(rel, user, RequestedAction.READ)) {
+                Map<String, ReleaseRelationship> subReleaseIdToRelationship = rel.getReleaseIdToRelationship();
+                releaseOrigin.put(releaseId, SW360Utils.printName(rel));
+                Map<String, String> row = createReleaseCSRow(relation, projectMailLineState, rel, clearingStatusList, user, "");
+                if (subReleaseIdToRelationship != null && !subReleaseIdToRelationship.isEmpty()) {
+                    flattenlinkedReleaseOfRelease(subReleaseIdToRelationship, projectOrigin, releaseOrigin,
+                                clearingStatusList, user, isInaccessibleLinkMasked);
+                }
+                releaseOrigin.remove(releaseId);
+                row.put("projectOrigin", String.join(" -> ", projectOrigin.values()));
+                row.put("releaseOrigin", String.join(" -> ", releaseOrigin.values()));
             } else {
                 Map<String, String> row = createInaccessibleReleaseCSRow(clearingStatusList);
                 row.put("projectOrigin", "");

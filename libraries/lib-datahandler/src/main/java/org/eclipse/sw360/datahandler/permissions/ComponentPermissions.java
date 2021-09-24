@@ -149,11 +149,11 @@ public class ComponentPermissions extends DocumentPermissions<Component> {
     }
     
     private static String getDepartmentIfUserInBU(Component document, Set<String> BUs) {
-        for(String bu:BUs) {
+        for (String bu:BUs) {
             String buFromOrganisation = getBUFromOrganisation(bu);
             boolean isUserInBU = !isNullOrEmpty(bu) && !isNullOrEmpty(buFromOrganisation)
             && !isNullOrEmpty(document.getBusinessUnit()) && document.getBusinessUnit().equals(buFromOrganisation);
-            if(isUserInBU) {
+            if (isUserInBU) {
                 return bu;
             }
         }

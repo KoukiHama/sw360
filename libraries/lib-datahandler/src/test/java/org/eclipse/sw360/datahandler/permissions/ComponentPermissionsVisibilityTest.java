@@ -127,11 +127,11 @@ public class ComponentPermissionsVisibilityTest extends ScenarioTest<GivenCompon
     @Test
     @UseDataProvider("componentVisibilityByRoleProvider")
     public void testVisibilityForComponent(Visibility visibility, String bu, ComponentRole role, String moderatingUser, String creatingUser, String viewingUser, boolean expectedVisibility) throws Exception {
-    	if(role==MODERATOR) {
-    		given().a_component_with_$_$(role, moderatingUser).with_visibility_$_and_business_unit_$(visibility, bu);
-    	}else {
-    		given().a_component_with_$_$(role, creatingUser).with_visibility_$_and_business_unit_$(visibility, bu);
-    	}
+        if (role==MODERATOR) {
+            given().a_component_with_$_$(role, moderatingUser).with_visibility_$_and_business_unit_$(visibility, bu);
+        } else {
+            given().a_component_with_$_$(role, creatingUser).with_visibility_$_and_business_unit_$(visibility, bu);
+        }
         when().the_visibility_is_computed_for_the_wrong_department_and_the_user_$(viewingUser);
         then().the_visibility_should_be(expectedVisibility);
     }
