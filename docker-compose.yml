@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+  couchdb:
+    build:
+      context: ./scripts/docker-compose/couchdb
+    ports:
+      - "5985:5984"
+    volumes:
+      - "couchdb-data:/opt/couchdb/data"
+    environment:
+      - COUCHDB_PASSWORD=password
+      - COUCHDB_USER=admin
+
+  postgres:
+    image: postgres:12
+    volumes:
+      - "postgres-data:/var/lib/postgresql/data"
+    environment:
+      POSTGRES_USER: liferay
+      POSTGRES_PASSWORD: liferay
+      POSTGRES_DB: lportal
+    ports:
+      - "5435:5432"
+
+  sw360:
+    build:
+      context: .
+      dockerfile: Dockerfile4Compose
+      args:
+        - HTTP_PROXY=$HTTP_PROXY
+        - http_proxy=$http_proxy
+        - HTTPS_PROXY=$HTTPS_PROXY
+        - https_proxy=$https_proxy
+    ports: 
+      - "8090:8080"
+    depends_on:
+      - couchdb
+      - postgres
+
+volumes:
+  postgres-data:
+  couchdb-data:

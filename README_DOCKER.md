@@ -1,5 +1,6 @@
 # Steps to use SW360 Docker
 
+## For a single container
 * Install Docker.
 * Build Docker file
     1. Execute `docker build -t sw360 .` from inside base folder - `sw360`, `-t sw360` is the tag name given to final image created, `.` is to mention build context to Docker.
@@ -22,3 +23,22 @@
     * `docker commit container-id sw360configured`  -  create docker image from container
     * `docker stop old_container_id`  - stop old container
     * Start new configured container - `docker run -it -p 8090:8080 -p 5985:5984 -p 5435:5432 sw360configured`
+
+## For multiple container (sw360, couchDB3, postgres12)
+* Install Docker and docker-compose
+* Build Docker file
+    1. Execute `docker-compose build` from inside base folder.
+    2. Files need to be placed in `/etc/sw360`, can be placed in `sw360/scripts/docker-compose/config/etc_sw360`
+    3. It might be required to set proxy in case docker is not able to fetch dependencies during building.
+       * Set proxy and `active=true` in `sw360/scripts/docker-config/mvn-proxy-settings.xml`
+       * Set proxy in `.env` 
+* Run SW360 Docker
+    * Execute `docker-compose up -d` from inside base folder.
+       * UI can be accessed - `http://localhost:8090`
+       * CouchDB can be accessed on port `5985` Ex - `curl -X GET http://localhost:5985/sw360db/{doc_id}`
+       * Postgresql can be accessed on port `5435` Ex - `psql -h localhost -p 5435 -U postgres` , `Default pwd` - `postgrespwd`
+* SW360 UI and REST can be accessed from `http://localhost:8090` . Open SW360 UI and perform [initial configurations](https://github.com/eclipse/sw360/wiki/Deploy-Liferay7.3). Save image of the container once all configurations done, using `docker commit`
+* Docker Exit and Clean Exit
+    1. Execute `docker-compose down` from inside base folder.
+       * When exit with this `docker-compose down`, couchdb and postges data are saved in volume. The next time you start with `docker-compose up -d`, it will start using the saved volume.
+       * In case of exit with deleting volume - `docker-compose down -v`
