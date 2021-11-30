@@ -88,7 +88,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!--  User must provide below property configuration based on his/her liferay deployment environment -->
-        <base.deploy.dir />
+        <base.deploy.dir/>
 
         <!--
             This is were the liferay OSGi modules go to on upload:
@@ -179,7 +179,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.8.1</version>
+                <version>3.12.0</version>
             </dependency>
             <dependency>
                 <groupId>commons-cli</groupId>
