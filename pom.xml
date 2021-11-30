@@ -88,7 +88,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!--  User must provide below property configuration based on his/her liferay deployment environment -->
-        <base.deploy.dir />
+        <base.deploy.dir/>
 
         <!--
             This is were the liferay OSGi modules go to on upload:
@@ -402,7 +402,7 @@
             <dependency>
                 <groupId>com.liferay</groupId>
                 <artifactId>com.liferay.petra.lang</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.1</version>
                 <scope>test</scope>
             </dependency>
             <dependency>
