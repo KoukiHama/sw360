@@ -18,7 +18,7 @@
 # 
 # See the Jenkinsfile for usage within the Jenkins environment.
 
-FROM maven:3.6.3-jdk-11
+FROM maven:3.8.1-jdk-11
 
 ADD install-thrift.sh /install-thrift.sh
 RUN /install-thrift.sh
