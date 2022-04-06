@@ -54,7 +54,7 @@
         <patchlevel>0-SNAPSHOT</patchlevel>
         <java.version>11</java.version>
         <ektorp.version>1.5.0</ektorp.version>
-        <thrift.version>0.14.0</thrift.version>
+        <thrift.version>0.16.0</thrift.version>
         <guava.version>21.0</guava.version>
         <spring.version>5.2.9.RELEASE</spring.version>
         <spring-boot.version>2.1.17.RELEASE</spring-boot.version>
@@ -88,7 +88,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!--  User must provide below property configuration based on his/her liferay deployment environment -->
-        <base.deploy.dir />
+        <base.deploy.dir/>
 
         <!--
             This is were the liferay OSGi modules go to on upload:
