@@ -11,7 +11,7 @@
 # $ docker build -f sw360dev.Dockerfile -t sw360/sw360dev --rm=true --force-rm=true .
 # $ docker run -i -v $(pwd):/sw360portal -w /sw360portal --net=host -u $(id -u):$(id -g) sw360/sw360dev mvn package -DskipTests
 
-FROM maven:3.6.3-openjdk-11-slim
+FROM maven:3.8-jdk-11-slim
 MAINTAINER Maximilian Huber <maximilian.huber@tngtech.com>
 
 ADD scripts/install-thrift.sh /install-thrift.sh
