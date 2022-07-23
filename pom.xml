@@ -89,7 +89,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!--  User must provide below property configuration based on his/her liferay deployment environment -->
-        <base.deploy.dir />
+        <base.deploy.dir/>
 
         <!--
             This is were the liferay OSGi modules go to on upload:
@@ -117,7 +117,7 @@
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp</artifactId>
-                <version>4.3.1</version>
+                <version>4.9.2</version>
             </dependency>
             <dependency>
                 <groupId>com.github.cliftonlabs</groupId>
